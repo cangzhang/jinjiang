@@ -1,4 +1,4 @@
-use std::{collections::HashMap, borrow::Cow};
+use std::collections::HashMap;
 
 use encoding::{all::GBK, Encoding, DecoderTrap};
 use scraper::{Html, Selector};
@@ -66,7 +66,7 @@ pub async fn get_novel_detail(novel_id: u64) -> surf::Result<NovelStatistic> {
         .collect::<String>();
 
     let title_selector = Selector::parse(r#"[itemProp="articleSection"]"#).unwrap();
-    let title = doc
+    let _title = doc
         .select(&title_selector)
         .next()
         .unwrap()

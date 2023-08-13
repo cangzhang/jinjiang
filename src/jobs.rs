@@ -40,7 +40,7 @@ pub async fn sync_editor_recommended_list() -> surf::Result<()> {
         let title_td = book_row.select(&title_selector).next().unwrap();
         let title = title_td.text()
             .collect::<String>();
-        let novel_id = title_td.value().attr("href").unwrap().split("=").last().unwrap().parse::<u64>().unwrap();
+        let novel_id = title_td.value().attr("href").unwrap().split('=').last().unwrap().parse::<u64>().unwrap();
         let author_id = book_row
             .select(&author_id_selector)
             .next()
@@ -48,7 +48,7 @@ pub async fn sync_editor_recommended_list() -> surf::Result<()> {
             .value()
             .attr("href")
             .unwrap()
-            .split("=") 
+            .split('=') 
             .last()
             .unwrap()
             .parse::<u64>()
@@ -75,7 +75,7 @@ mod tests {
     #[tokio::test]
     async fn test_sync_editor_recommended_list() -> surf::Result<()> {
         dotenv().ok();
-        let _ = sync_editor_recommended_list().await?;
+        sync_editor_recommended_list().await?;
         Ok(())
     }
 }
