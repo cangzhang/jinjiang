@@ -11,8 +11,6 @@ use std::{
 };
 use dotenv::dotenv;
 
-use crate::jobs::sync_novel_details;
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
@@ -23,8 +21,8 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn(async move {
         loop {
             dbg!("[sync_novel_details] started");
-            let _ = sync_novel_details().await;
-            thread::sleep(time::Duration::from_secs(60 * 5));
+            let _ = jobs::sync_novel_statistics().await;
+            thread::sleep(time::Duration::from_secs(60 * 30));
         }
     });
 
@@ -34,7 +32,7 @@ async fn main() -> anyhow::Result<()> {
             Router::new().nest(
                 "/novel/:novel_id",
                 Router::new()
-                    .route("/detail", get(route_fn::novel_detail))
+                    .route("/detail", get(route_fn::novel_statistics))
                     .route("/clicks", get(route_fn::novel_clicks)),
             ),
         )
