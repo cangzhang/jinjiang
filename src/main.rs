@@ -7,25 +7,24 @@ use axum::{routing::get, Extension, Router};
 use sqlx::SqlitePool;
 use std::{
     env,
-    net::SocketAddr,
-    thread,
-    time,
+    net::SocketAddr, thread, time,
 };
-use tracing::info;
+use dotenv::dotenv;
 
 use crate::jobs::sync_novel_details;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
+    dotenv().ok();
 
     let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
 
     tokio::spawn(async move {
         loop {
-            thread::sleep(time::Duration::from_secs(20));
-            info!("[sync_novel_details] started");
+            dbg!("[sync_novel_details] started");
             let _ = sync_novel_details().await;
+            thread::sleep(time::Duration::from_secs(60 * 5));
         }
     });
 

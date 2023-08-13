@@ -66,8 +66,8 @@ pub async fn get_novel_detail(novel_id: u64) -> surf::Result<NovelDetail> {
     })
 }
 
-pub async fn get_chapter_clicks(id: u64) -> surf::Result<(u64, u64)> {
-    let clicks_url = format!("https://s8-static.jjwxc.net/getnovelclick.php?novelid={id}&jsonpcallback=novelclick", id=id);
+pub async fn get_chapter_clicks(novel_id: u64) -> surf::Result<(u64, u64)> {
+    let clicks_url = format!("https://s8-static.jjwxc.net/getnovelclick.php?novelid={novel_id}&jsonpcallback=novelclick");
     let body = surf::get(clicks_url).recv_string().await?;
     let click_map_str = body.replace("novelclick(", "").replace(')', "");
     let click_map = serde_json::from_str::<HashMap<String, String>>(&click_map_str).unwrap();
