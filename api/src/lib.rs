@@ -5,7 +5,6 @@ pub mod scrape;
 
 use axum::{routing::get, Extension, Router};
 use dotenvy::dotenv;
-use sqlx::SqlitePool;
 use std::{
     env,
     net::SocketAddr, thread, time,
@@ -16,7 +15,7 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
     dotenv().ok();
 
-    let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
+    let pool = db::create_pool(&env::var("DATABASE_URL")?);
 
     tokio::spawn(async move {
         loop {

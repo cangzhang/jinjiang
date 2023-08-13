@@ -8,20 +8,20 @@ use crate::scrape::{get_novel_detail, get_html, Novel};
 pub async fn sync_novel_statistics() -> anyhow::Result<()> {
     let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
 
-    let rows = sqlx::query!("SELECT id, novel_id FROM novels")
-        .fetch_all(&pool)
-        .await
-        .unwrap();
+    // let rows = sqlx::query!("SELECT id, novel_id FROM novels")
+    //     .fetch_all(&pool)
+    //     .await
+    //     .unwrap();
 
-    for row in rows {
-        let novel_id = row.novel_id.unwrap();
-        match get_novel_detail(novel_id as u64).await {
-            Ok(novel) => {
-                println!("{:?}", novel);
-            }
-            Err(_) => println!("failed for novel_id: {}", novel_id),
-        };
-    }
+    // for row in rows {
+    //     let novel_id = row.novel_id;
+    //     match get_novel_detail(novel_id as u64).await {
+    //         Ok(novel) => {
+    //             println!("{:?}", novel);
+    //         }
+    //         Err(_) => println!("failed for novel_id: {}", novel_id),
+    //     };
+    // }
 
     Ok(())
 }
@@ -60,6 +60,8 @@ pub async fn sync_editor_recommended_list() -> surf::Result<()> {
             novel_id,
             ..Default::default()
         });
+
+        db::insert_novel(&pool, &novels).await?;
     }
     dbg!(novels);
 
