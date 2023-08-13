@@ -68,7 +68,7 @@ pub async fn sync_editor_recommended_list() -> surf::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use dotenv::dotenv;
+    use dotenvy::dotenv;
 
     use crate::jobs::*;
 

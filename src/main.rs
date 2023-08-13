@@ -4,12 +4,12 @@ pub mod route_fn;
 pub mod scrape;
 
 use axum::{routing::get, Extension, Router};
+use dotenvy::dotenv;
 use sqlx::SqlitePool;
 use std::{
     env,
     net::SocketAddr, thread, time,
 };
-use dotenv::dotenv;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
