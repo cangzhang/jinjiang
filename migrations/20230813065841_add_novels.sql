@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS novels (
+    id INTEGER PRIMARY KEY NOT NULL,
+    novel_id INTEGER
+);

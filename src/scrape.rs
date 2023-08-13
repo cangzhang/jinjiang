@@ -6,8 +6,14 @@ use serde::{Deserialize, Serialize};
 #[derive(Default, Serialize, Deserialize)]
 pub struct Novel {
     pub id: u64,
+    pub novel_id: u64,
+}
+
+#[derive(Default, Serialize, Deserialize, Debug)]
+pub struct NovelDetail {
+    pub novel_id: u64,
     pub title: String,
-    pub author: String,
+    pub author: u64,
     pub reviews: u64,
     pub collected: u64,
     pub first_chapter_clicks: u64,
@@ -18,10 +24,9 @@ pub fn to_u64(s: &str) -> u64 {
     s.parse::<u64>().unwrap()
 }
 
-pub async fn get_novel_detail(id: u64) -> surf::Result<Novel> {
-    let novel_url = format!("https://www.jjwxc.net/onebook.php?novelid={id}");
-    // let body = surf::get(novel_url).await?.body_bytes().await?;
-    let (html_resp, clicks_resp) = futures::join!(surf::get(novel_url), get_chapter_clicks(id));
+pub async fn get_novel_detail(novel_id: u64) -> surf::Result<NovelDetail> {
+    let novel_url = format!("https://www.jjwxc.net/onebook.php?novelid={novel_id}");
+    let (html_resp, clicks_resp) = futures::join!(surf::get(novel_url), get_chapter_clicks(novel_id));
     let body = if let Ok(mut resp) = html_resp {
         resp.body_bytes().await?
     } else {
@@ -51,8 +56,8 @@ pub async fn get_novel_detail(id: u64) -> surf::Result<Novel> {
         .text()
         .collect::<String>();
 
-    Ok(Novel {
-        id,
+    Ok(NovelDetail {
+        novel_id,
         reviews: to_u64(&reviews),
         collected: to_u64(&collected),
         first_chapter_clicks: clicks.0,
