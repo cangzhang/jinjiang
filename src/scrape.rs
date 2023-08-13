@@ -14,7 +14,7 @@ pub struct Novel {
     pub last_chapter_clicks: u64,
 }
 
-pub fn to_u64(s: &String) -> u64 {
+pub fn to_u64(s: &str) -> u64 {
     s.parse::<u64>().unwrap()
 }
 
@@ -23,8 +23,7 @@ pub async fn get_novel_detail(id: u64) -> surf::Result<Novel> {
     // let body = surf::get(novel_url).await?.body_bytes().await?;
     let (html_resp, clicks_resp) = futures::join!(surf::get(novel_url), get_chapter_clicks(id));
     let body = if let Ok(mut resp) = html_resp {
-        let b = resp.body_bytes().await?;
-        b
+        resp.body_bytes().await?
     } else {
         return Err(html_resp.unwrap_err());
     };
@@ -65,7 +64,7 @@ pub async fn get_novel_detail(id: u64) -> surf::Result<Novel> {
 pub async fn get_chapter_clicks(id: u64) -> surf::Result<(u64, u64)> {
     let clicks_url = format!("https://s8-static.jjwxc.net/getnovelclick.php?novelid={id}&jsonpcallback=novelclick", id=id);
     let body = surf::get(clicks_url).recv_string().await?;
-    let click_map_str = body.replace("novelclick(", "").replace(")", "");
+    let click_map_str = body.replace("novelclick(", "").replace(')', "");
     let click_map = serde_json::from_str::<HashMap<String, String>>(&click_map_str).unwrap();
 
     let mut sorted: Vec<(&String, &String)> = click_map.iter().collect();
