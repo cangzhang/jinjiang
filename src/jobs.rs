@@ -1,6 +1,8 @@
 use scraper::{Html, Selector};
+use prisma_client_rust::NewClientError;
 
 use crate::scrape::{get_html, Novel};
+use crate::prisma::PrismaClient;
 
 pub async fn sync_novel_statistics() -> anyhow::Result<()> {
     // let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
@@ -12,7 +14,7 @@ pub async fn sync_novel_statistics() -> anyhow::Result<()> {
 
     // for row in rows {
     //     let novel_id = row.novel_id;
-    //     match get_novel_detail(novel_id as u64).await {
+    //     match get_novel_detail(novel_id as i32).await {
     //         Ok(novel) => {
     //             println!("{:?}", novel);
     //         }
@@ -24,20 +26,30 @@ pub async fn sync_novel_statistics() -> anyhow::Result<()> {
 }
 
 pub async fn sync_editor_recommended_list() -> surf::Result<()> {
+    let db = PrismaClient::_builder().build().await.unwrap();
+
     let url = "https://www.jjwxc.net/channeltopten.php?channelid=118&str=28";
     let html = get_html(url).await?;
     let doc = Html::parse_document(&html);
-    
-    let tr_selector = Selector::parse(r#"tr[onmouseover]:nth-child(n+2):nth-child(-n+21)"#).unwrap();
+
+    let tr_selector =
+        Selector::parse(r#"tr[onmouseover]:nth-child(n+2):nth-child(-n+21)"#).unwrap();
     let author_id_selector = Selector::parse(r#"td:nth-child(2) > a"#).unwrap();
     let title_selector = Selector::parse(r#"td:nth-child(3) > a"#).unwrap();
 
-    let mut novels = vec![];
-    for book_row in doc.select(&tr_selector) {
+    // let mut novels = vec![];
+    for (idx, book_row) in doc.select(&tr_selector).enumerate() {
         let title_td = book_row.select(&title_selector).next().unwrap();
-        let title = title_td.text()
-            .collect::<String>();
-        let novel_id = title_td.value().attr("href").unwrap().split('=').last().unwrap().parse::<u64>().unwrap();
+        let title = title_td.text().collect::<String>();
+        let novel_id = title_td
+            .value()
+            .attr("href")
+            .unwrap()
+            .split('=')
+            .last()
+            .unwrap()
+            .parse::<i32>()
+            .unwrap();
         let author_id = book_row
             .select(&author_id_selector)
             .next()
@@ -45,20 +57,24 @@ pub async fn sync_editor_recommended_list() -> surf::Result<()> {
             .value()
             .attr("href")
             .unwrap()
-            .split('=') 
+            .split('=')
             .last()
             .unwrap()
-            .parse::<u64>()
+            .parse::<i32>()
             .unwrap();
 
-        novels.push(Novel {
-            title,
-            author_id,
-            novel_id,
-            ..Default::default()
-        });
+        // novels.push(Novel {
+        //     title,
+        //     author_id,
+        //     novel_id,
+        //     ..Default::default()
+        // });
+
+        if idx == 0 {
+            let r = db.novel().create(title, novel_id, author_id, vec![]).exec().await;
+            dbg!(r);
+        }
     }
-    dbg!(novels);
 
     Ok(())
 }

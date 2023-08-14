@@ -2,20 +2,20 @@ pub mod errors;
 pub mod jobs;
 pub mod route_fn;
 pub mod scrape;
+pub mod prisma;
 
-use axum::{routing::get, Extension, Router};
+use axum::{routing::get, Router};
 use dotenvy::dotenv;
 use std::{
-    env,
     net::SocketAddr, thread, time,
 };
+// use prisma::PrismaClient;
+// use prisma_client_rust::NewClientError;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
     dotenv().ok();
-
-    // let pool = db::create_pool(&env::var("DATABASE_URL")?);
 
     tokio::spawn(async move {
         loop {
