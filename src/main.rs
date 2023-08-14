@@ -2,6 +2,7 @@ pub mod errors;
 pub mod jobs;
 pub mod route_fn;
 pub mod scrape;
+#[allow(warnings, unused)]
 pub mod prisma;
 
 use axum::{routing::get, Router};
