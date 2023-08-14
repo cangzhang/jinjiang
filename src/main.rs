@@ -15,7 +15,7 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
     dotenv().ok();
 
-    let pool = db::create_pool(&env::var("DATABASE_URL")?);
+    // let pool = db::create_pool(&env::var("DATABASE_URL")?);
 
     tokio::spawn(async move {
         loop {
@@ -34,8 +34,8 @@ async fn main() -> anyhow::Result<()> {
                     .route("/detail", get(route_fn::novel_statistics))
                     .route("/clicks", get(route_fn::novel_clicks)),
             ),
-        )
-        .layer(Extension(pool.clone()));
+        );
+        // .layer(Extension(pool.clone()));
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3300));
     tracing::info!("listening on {}", addr);

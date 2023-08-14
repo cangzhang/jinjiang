@@ -1,12 +1,9 @@
-use std::env;
-
 use scraper::{Html, Selector};
-use sqlx::SqlitePool;
 
-use crate::scrape::{get_novel_detail, get_html, Novel};
+use crate::scrape::{get_html, Novel};
 
 pub async fn sync_novel_statistics() -> anyhow::Result<()> {
-    let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
+    // let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
 
     // let rows = sqlx::query!("SELECT id, novel_id FROM novels")
     //     .fetch_all(&pool)
@@ -60,8 +57,6 @@ pub async fn sync_editor_recommended_list() -> surf::Result<()> {
             novel_id,
             ..Default::default()
         });
-
-        db::insert_novel(&pool, &novels).await?;
     }
     dbg!(novels);
 
