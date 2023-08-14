@@ -18,3 +18,15 @@ model Novel {
     createdAt DateTime  @default(now())
     updatedAt DateTime?
 }
+
+model NovelStatistics {
+    id                 String @id @default(cuid())
+    novelId            Int
+    firstChapterClicks Int    @default(0)
+    lastChapterClicks  Int    @default(0)
+    reviews            Int    @default(0)
+    collected          Int    @default(0)
+    rewards            Int    @default(0)
+    createdAt DateTime  @default(now())
+    updatedAt DateTime?
+}

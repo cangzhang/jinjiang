@@ -1,4 +1,3 @@
-use prisma_client_rust::PrismaValue::DateTime;
 use scraper::{Html, Selector};
 
 use crate::prisma::{novel, PrismaClient};
