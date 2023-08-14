@@ -170,8 +170,8 @@ pub mod novel {
         pub fn order(direction: ::prisma_client_rust::Direction) -> OrderByParam {
             OrderByParam::NovelId(direction)
         }
-        pub fn equals(value: i32) -> WhereParam {
-            WhereParam::NovelId(_prisma::read_filters::IntFilter::Equals(value))
+        pub fn equals<T: From<UniqueWhereParam>>(value: i32) -> T {
+            UniqueWhereParam::NovelIdEquals(value).into()
         }
         ::prisma_client_rust::scalar_where_param_fns!(_prisma::read_filters::IntFilter, NovelId, {
             fn in_vec(_: Vec<i32>) -> InVec;
@@ -837,11 +837,15 @@ pub mod novel {
     }
     #[derive(Clone)]
     pub enum UniqueWhereParam {
+        NovelIdEquals(i32),
         IdEquals(String),
     }
     impl From<UniqueWhereParam> for WhereParam {
         fn from(value: UniqueWhereParam) -> Self {
             match value {
+                UniqueWhereParam::NovelIdEquals(value) => {
+                    Self::NovelId(_prisma::read_filters::IntFilter::Equals(value))
+                }
                 UniqueWhereParam::IdEquals(value) => {
                     Self::Id(_prisma::read_filters::StringFilter::Equals(value))
                 }

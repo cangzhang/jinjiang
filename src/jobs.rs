@@ -1,7 +1,8 @@
+use prisma_client_rust::PrismaValue::DateTime;
 use scraper::{Html, Selector};
 
+use crate::prisma::{novel, PrismaClient};
 use crate::scrape::get_html;
-use crate::prisma::PrismaClient;
 
 pub async fn sync_novel_statistics() -> anyhow::Result<()> {
     // let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
@@ -35,8 +36,7 @@ pub async fn sync_editor_recommended_list() -> surf::Result<()> {
     let author_id_selector = Selector::parse(r#"td:nth-child(2) > a"#).unwrap();
     let title_selector = Selector::parse(r#"td:nth-child(3) > a"#).unwrap();
 
-    // let mut novels = vec![];
-    for (idx, book_row) in doc.select(&tr_selector).enumerate() {
+    for (_idx, book_row) in doc.select(&tr_selector).enumerate() {
         let title_td = book_row.select(&title_selector).next().unwrap();
         let title = title_td.text().collect::<String>();
         let novel_id = title_td
@@ -61,17 +61,20 @@ pub async fn sync_editor_recommended_list() -> surf::Result<()> {
             .parse::<i32>()
             .unwrap();
 
-        // novels.push(Novel {
-        //     title,
-        //     author_id,
-        //     novel_id,
-        //     ..Default::default()
-        // });
-
-        if idx == 0 {
-            let r = db.novel().create(title, novel_id, author_id, vec![]).exec().await?;
-            dbg!(r);
-        }
+        let r = db
+            .novel()
+            .upsert(
+                novel::novel_id::equals(novel_id),
+                novel::create(title.clone(), novel_id, author_id, vec![]),
+                vec![
+                    novel::title::set(title.clone()),
+                    novel::author_id::set(author_id),
+                    novel::updated_at::set(Some(chrono::DateTime::from(chrono::Utc::now()))),
+                ],
+            )
+            .exec()
+            .await?;
+        dbg!(r);
     }
 
     Ok(())
