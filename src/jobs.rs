@@ -1,25 +1,35 @@
 use scraper::{Html, Selector};
 
-use crate::prisma::{novel, PrismaClient};
-use crate::scrape::get_html;
+use crate::prisma::{novel, novel_statistics, PrismaClient};
+use crate::scrape::{get_html, get_novel_statistics};
 
 pub async fn sync_novel_statistics() -> anyhow::Result<()> {
-    // let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
+    let db = PrismaClient::_builder().build().await.unwrap();
 
-    // let rows = sqlx::query!("SELECT id, novel_id FROM novels")
-    //     .fetch_all(&pool)
-    //     .await
-    //     .unwrap();
-
-    // for row in rows {
-    //     let novel_id = row.novel_id;
-    //     match get_novel_detail(novel_id as i32).await {
-    //         Ok(novel) => {
-    //             println!("{:?}", novel);
-    //         }
-    //         Err(_) => println!("failed for novel_id: {}", novel_id),
-    //     };
-    // }
+    let rows: Vec<novel::Data> = db.novel().find_many(vec![]).exec().await?;
+    for row in rows {
+        let novel_id = row.novel_id;
+        match get_novel_statistics(novel_id).await {
+            Ok(novel) => {
+                let s = db
+                    .novel_statistics()
+                    .create(
+                        novel_id,
+                        vec![
+                            novel_statistics::first_chapter_clicks::set(novel.first_chapter_clicks),
+                            novel_statistics::last_chapter_clicks::set(novel.last_chapter_clicks),
+                            novel_statistics::reviews::set(novel.reviews),
+                            novel_statistics::collected::set(novel.collected),
+                            novel_statistics::rewards::set(novel.rewards),
+                        ],
+                    )
+                    .exec()
+                    .await?;
+                println!("{:?}", s);
+            }
+            Err(e) => println!("failed for novel_id: {}, {:?}", novel_id, e),
+        };
+    }
 
     Ok(())
 }
@@ -89,6 +99,13 @@ mod tests {
     async fn test_sync_editor_recommended_list() -> surf::Result<()> {
         dotenv().ok();
         sync_editor_recommended_list().await?;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_sync_novel_statistics() -> surf::Result<()> {
+        dotenv().ok();
+        sync_novel_statistics().await?;
         Ok(())
     }
 }

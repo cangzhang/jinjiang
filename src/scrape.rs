@@ -28,7 +28,7 @@ pub fn to_i32(s: &str) -> i32 {
     s.parse::<i32>().unwrap()
 }
 
-pub async fn get_novel_detail(novel_id: i32) -> surf::Result<NovelStatistic> {
+pub async fn get_novel_statistics(novel_id: i32) -> surf::Result<NovelStatistic> {
     let novel_url = format!("https://www.jjwxc.net/onebook.php?novelid={novel_id}");
     let (html_body, clicks_resp) = futures::join!(get_html(&novel_url), get_chapter_clicks(novel_id));
     let html = if let Ok(b) = html_body {
@@ -88,8 +88,11 @@ pub async fn get_chapter_clicks(novel_id: i32) -> surf::Result<(i32, i32)> {
     let clicks_url = format!("https://s8-static.jjwxc.net/getnovelclick.php?novelid={novel_id}&jsonpcallback=novelclick");
     let body = surf::get(clicks_url).recv_string().await?;
     let click_map_str = body.replace("novelclick(", "").replace(')', "");
-    let click_map = serde_json::from_str::<HashMap<String, String>>(&click_map_str).unwrap();
+    if click_map_str.eq("[]") {
+        return Err(surf::Error::from_str(429, "empty click map"));
+    }
 
+    let click_map = serde_json::from_str::<HashMap<String, String>>(&click_map_str).unwrap();
     let mut sorted: Vec<(&String, &String)> = click_map.iter().collect();
     sorted.sort_by_key(|a| a.0.parse::<i32>().unwrap());
     let len = sorted.len();
