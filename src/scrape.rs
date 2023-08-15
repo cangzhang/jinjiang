@@ -109,12 +109,12 @@ pub async fn get_html(url: &str) -> surf::Result<String> {
     Ok(decoded_string)
 }
 
-pub async fn make_editor_recommended_list() -> anyhow::Result<Vec<(i32, String, i32)>> {
-    let url = "https://www.jjwxc.net/channeltopten.php?channelid=118&str=28";
-    let html = match get_html(url).await {
+pub async fn make_editor_recommended_list(list_url: String) -> anyhow::Result<Vec<(i32, i32, String)>> {
+    // let url = "https://www.jjwxc.net/channeltopten.php?channelid=118&str=28";
+    let html = match get_html(&list_url).await {
         Ok(h) => h,
         Err(_) => {
-            bail!("fetch {url} failed")
+            bail!("fetch {list_url} failed")
         },
     };
     let doc = Html::parse_document(&html);
@@ -149,7 +149,7 @@ pub async fn make_editor_recommended_list() -> anyhow::Result<Vec<(i32, String, 
             .parse::<i32>()
             .unwrap();
 
-        novels.push((novel_id, title, author_id));
+        novels.push((novel_id, author_id, title));
     }
 
     Ok(novels)

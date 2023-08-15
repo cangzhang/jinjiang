@@ -32,8 +32,8 @@ async fn main() -> anyhow::Result<()> {
         thread::sleep(time::Duration::from_secs(60));
 
         loop {
-            dbg!("[sync_editor_recommended_list] started");
-            let _ = jobs::sync_editor_recommended_list(db_guard2.clone()).await;
+            dbg!("[sycn_list] started");
+            let _ = jobs::sync_book_list(db_guard2.clone()).await;
 
             thread::sleep(time::Duration::from_secs(60 * 30));
         }

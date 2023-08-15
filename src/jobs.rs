@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::prisma::{novel, novel_statistics, PrismaClient};
+use crate::prisma::{list_links, novel, novel_statistics, PrismaClient};
 use crate::scrape::get_novel_statistics;
 use crate::{create_db_pool, scrape};
 
@@ -37,23 +37,33 @@ pub async fn sync_novel_statistics() -> anyhow::Result<()> {
     Ok(())
 }
 
-pub async fn sync_editor_recommended_list(db: Arc<PrismaClient>) -> anyhow::Result<()> {
-    let list = scrape::make_editor_recommended_list().await?;
-    for (novel_id, title, author_id) in list {
-        let row = db
-            .novel()
-            .upsert(
-                novel::novel_id::equals(novel_id),
-                novel::create(title.clone(), novel_id, author_id, vec![]),
-                vec![
-                    novel::title::set(title.clone()),
-                    novel::author_id::set(author_id),
-                    novel::updated_at::set(Some(chrono::DateTime::from(chrono::Utc::now()))),
-                ],
-            )
-            .exec()
-            .await?;
-        println!("{:?}", row);
+pub async fn sync_book_list(db: Arc<PrismaClient>) -> anyhow::Result<()> {
+    let list_urls: Vec<list_links::Data> = db.list_links().find_many(vec![]).exec().await?;
+    for page_item in list_urls {
+        let list = scrape::make_editor_recommended_list(page_item.link).await?;
+        for (novel_id, author_id, title) in list {
+            let row = db
+                .novel()
+                .upsert(
+                    novel::novel_id::equals(novel_id),
+                    novel::create(
+                        title.clone(),
+                        novel_id,
+                        author_id,
+                        page_item.name.clone(),
+                        vec![],
+                    ),
+                    vec![
+                        novel::title::set(title.clone()),
+                        novel::author_id::set(author_id),
+                        novel::list_name::set(page_item.name.clone()),
+                        novel::updated_at::set(Some(chrono::DateTime::from(chrono::Utc::now()))),
+                    ],
+                )
+                .exec()
+                .await?;
+            println!("{:?}", row);
+        }
     }
 
     Ok(())
@@ -66,11 +76,11 @@ mod tests {
     use crate::{create_db_pool, jobs::*};
 
     #[tokio::test]
-    async fn test_sync_editor_recommended_list() -> surf::Result<()> {
+    async fn test_sync_book_list() -> surf::Result<()> {
         dotenv().ok();
 
         let db = create_db_pool().await;
-        sync_editor_recommended_list(Arc::new(db)).await?;
+        sync_book_list(Arc::new(db)).await?;
         Ok(())
     }
 
