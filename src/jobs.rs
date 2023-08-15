@@ -1,16 +1,19 @@
-use scraper::{Html, Selector};
+use std::sync::Arc;
 
 use crate::prisma::{novel, novel_statistics, PrismaClient};
-use crate::scrape::{get_html, get_novel_statistics};
+use crate::scrape::get_novel_statistics;
+use crate::{create_db_pool, scrape};
 
 pub async fn sync_novel_statistics() -> anyhow::Result<()> {
-    let db = PrismaClient::_builder().build().await.unwrap();
+    let db = create_db_pool().await;
 
     let rows: Vec<novel::Data> = db.novel().find_many(vec![]).exec().await?;
     for row in rows {
         let novel_id = row.novel_id;
         match get_novel_statistics(novel_id).await {
             Ok(novel) => {
+                dbg!("got statistics for novel_id: {}", novel_id);
+
                 let s = db
                     .novel_statistics()
                     .create(
@@ -34,43 +37,10 @@ pub async fn sync_novel_statistics() -> anyhow::Result<()> {
     Ok(())
 }
 
-pub async fn sync_editor_recommended_list() -> surf::Result<()> {
-    let db = PrismaClient::_builder().build().await.unwrap();
-
-    let url = "https://www.jjwxc.net/channeltopten.php?channelid=118&str=28";
-    let html = get_html(url).await?;
-    let doc = Html::parse_document(&html);
-    let tr_selector =
-        Selector::parse(r#"tr[onmouseover]:nth-child(n+2):nth-child(-n+21)"#).unwrap();
-    let author_id_selector = Selector::parse(r#"td:nth-child(2) > a"#).unwrap();
-    let title_selector = Selector::parse(r#"td:nth-child(3) > a"#).unwrap();
-
-    for (_idx, book_row) in doc.select(&tr_selector).enumerate() {
-        let title_td = book_row.select(&title_selector).next().unwrap();
-        let title = title_td.text().collect::<String>();
-        let novel_id = title_td
-            .value()
-            .attr("href")
-            .unwrap()
-            .split('=')
-            .last()
-            .unwrap()
-            .parse::<i32>()
-            .unwrap();
-        let author_id = book_row
-            .select(&author_id_selector)
-            .next()
-            .unwrap()
-            .value()
-            .attr("href")
-            .unwrap()
-            .split('=')
-            .last()
-            .unwrap()
-            .parse::<i32>()
-            .unwrap();
-
-        let r = db
+pub async fn sync_editor_recommended_list(db: Arc<PrismaClient>) -> anyhow::Result<()> {
+    let list = scrape::make_editor_recommended_list().await?;
+    for (novel_id, title, author_id) in list {
+        let row = db
             .novel()
             .upsert(
                 novel::novel_id::equals(novel_id),
@@ -83,7 +53,7 @@ pub async fn sync_editor_recommended_list() -> surf::Result<()> {
             )
             .exec()
             .await?;
-        dbg!(r);
+        println!("{:?}", row);
     }
 
     Ok(())
@@ -93,12 +63,14 @@ pub async fn sync_editor_recommended_list() -> surf::Result<()> {
 mod tests {
     use dotenvy::dotenv;
 
-    use crate::jobs::*;
+    use crate::{create_db_pool, jobs::*};
 
     #[tokio::test]
     async fn test_sync_editor_recommended_list() -> surf::Result<()> {
         dotenv().ok();
-        sync_editor_recommended_list().await?;
+
+        let db = create_db_pool().await;
+        sync_editor_recommended_list(Arc::new(db)).await?;
         Ok(())
     }
 
