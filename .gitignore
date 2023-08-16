@@ -2,6 +2,6 @@
 *.db
 .env.*
 .vscode/
-prisma/migrations/
+
 sqlite.db*
 src/prisma.rs
