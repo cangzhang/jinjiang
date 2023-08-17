@@ -17,7 +17,7 @@ use prisma_client_rust::{
     prisma_errors::query_engine::{RecordNotFound, UniqueKeyViolation},
     QueryError,
 };
-use std::{net::SocketAddr, sync::Arc, thread, time};
+use std::{net::SocketAddr, sync::Arc};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -27,27 +27,6 @@ async fn main() -> anyhow::Result<()> {
     let db = create_db_pool().await;
     let db_guard = Arc::new(db);
     let db_guard2 = db_guard.clone();
-
-    tokio::spawn(async move {
-        thread::sleep(time::Duration::from_secs(20));
-
-        loop {
-            dbg!("[sycn_list] started");
-            let _ = jobs::sync_book_list(db_guard2.clone()).await;
-
-            thread::sleep(time::Duration::from_secs(60 * 30));
-        }
-    });
-    tokio::spawn(async move {
-        thread::sleep(time::Duration::from_secs(60 * 5));
-
-        loop {
-            dbg!("[sync_novel_statistics] started");
-            let _ = jobs::sync_novel_statistics().await;
-
-            thread::sleep(time::Duration::from_secs(60 * 30));
-        }
-    });
 
     let app = Router::new()
         .nest(

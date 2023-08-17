@@ -12,8 +12,6 @@ pub async fn sync_novel_statistics() -> anyhow::Result<()> {
         let novel_id = row.novel_id;
         match get_novel_statistics(novel_id).await {
             Ok(novel) => {
-                dbg!("got statistics for novel_id: {}", novel_id);
-
                 let s = db
                     .novel_statistics()
                     .create(
