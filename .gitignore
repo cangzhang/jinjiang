@@ -1,6 +1,5 @@
 /target
 *.db
-.env.*
 .vscode/
 
 sqlite.db*
