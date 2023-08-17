@@ -88,17 +88,14 @@ pub async fn sync_book_list() -> anyhow::Result<()> {
 #[cfg(test)]
 mod tests {
     use crate::jobs::*;
-    use server::create_db_pool;
 
     #[tokio::test]
     async fn test_sync_book_list() -> anyhow::Result<()> {
-        sync_book_list().await?;
-        Ok(())
+        sync_book_list().await
     }
 
     #[tokio::test]
     async fn test_sync_novel_statistics() -> anyhow::Result<()> {
-        sync_novel_statistics().await?;
-        Ok(())
+        sync_novel_statistics().await
     }
 }
