@@ -5,3 +5,4 @@
 
 sqlite.db*
 src/prisma.rs
+server/src/prisma.rs

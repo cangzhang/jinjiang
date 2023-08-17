@@ -1,0 +1,11 @@
+[package]
+name = "jinjiang-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+server = { path = "../server" }
+clap = { version = "4.3.21", features = ["derive"] }
+anyhow = "1.0.72"
+tokio = { version = "1.31.0", features = ["full"]}
+chrono = "0.4.26"

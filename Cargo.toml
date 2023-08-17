@@ -7,22 +7,12 @@ edition = "2021"
 resolver = "2"
 members = [
     ".",
-    "prisma-cli"
+    "prisma-cli",
+    "server",
+    "cli",
 ]
 
 [dependencies]
-anyhow = "1.0.72"
-axum = { version = "0.6.20", features = ["json"] }
-encoding = "0.2.33"
-futures = "0.3.28"
-scraper = "0.17.1"
-serde = { version = "1.0.183", features = ["derive"] }
-serde_json = "1.0.104"
+server = { path = "server" }
 tokio = { version = "1.31.0", features = ["full"]}
-tower-http = { version = "0.4.3", features = ["trace"] }
-tracing = "0.1.37"
-tracing-subscriber = { version = "0.3.17", features = ["env-filter"]}
-dotenvy = "0.15.7"
-chrono = "0.4.26"
-prisma-client-rust = { git = "https://github.com/Brendonovich/prisma-client-rust", tag = "0.6.8", features = ["migrations", "sqlite"] }
-reqwest = "0.11.18"
+anyhow = "1.0.72"
