@@ -7,7 +7,7 @@ use crate::{create_db_pool, scrape};
 pub async fn sync_novel_statistics() -> anyhow::Result<()> {
     let db = create_db_pool().await;
 
-    let rows: Vec<novel::Data> = db.novel().find_many(vec![]).exec().await?;
+    let rows: Vec<novel::Data> = db.novel().find_many(vec![novel::in_list::equals(true)]).exec().await?;
     for row in rows {
         let novel_id = row.novel_id;
         match get_novel_statistics(novel_id).await {
@@ -39,9 +39,11 @@ pub async fn sync_novel_statistics() -> anyhow::Result<()> {
 
 pub async fn sync_book_list(db: Arc<PrismaClient>) -> anyhow::Result<()> {
     let list_urls: Vec<list_links::Data> = db.list_links().find_many(vec![]).exec().await?;
+    let mut novel_ids = vec![];
     for page_item in list_urls {
         let list = scrape::make_editor_recommended_list(page_item.link).await?;
         for (novel_id, author_id, title) in list {
+            novel_ids.push(novel_id);
             let row = db
                 .novel()
                 .upsert(
@@ -51,12 +53,15 @@ pub async fn sync_book_list(db: Arc<PrismaClient>) -> anyhow::Result<()> {
                         novel_id,
                         author_id,
                         page_item.name.clone(),
-                        vec![],
+                        vec![
+                            novel::in_list::set(true),
+                        ],
                     ),
                     vec![
                         novel::title::set(title.clone()),
                         novel::author_id::set(author_id),
                         novel::list_name::set(page_item.name.clone()),
+                        novel::in_list::set(true),
                         novel::updated_at::set(Some(chrono::DateTime::from(chrono::Utc::now()))),
                     ],
                 )
@@ -65,6 +70,17 @@ pub async fn sync_book_list(db: Arc<PrismaClient>) -> anyhow::Result<()> {
             println!("{:?}", row);
         }
     }
+    let _ = db
+        .novel()
+        .update_many(
+            vec![novel::novel_id::not_in_vec(novel_ids)],
+            vec![
+                novel::in_list::set(false),
+                novel::updated_at::set(Some(chrono::DateTime::from(chrono::Utc::now()))),
+            ],
+        )
+        .exec()
+        .await?;
 
     Ok(())
 }

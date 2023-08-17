@@ -29,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
     let db_guard2 = db_guard.clone();
 
     tokio::spawn(async move {
-        thread::sleep(time::Duration::from_secs(60));
+        thread::sleep(time::Duration::from_secs(20));
 
         loop {
             dbg!("[sycn_list] started");
