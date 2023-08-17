@@ -1,41 +1,6 @@
+use crate::scrape::{get_novel_statistics, self};
+use server::create_db_pool;
 use server::prisma::{list_links, novel, novel_statistics};
-use server::scrape::get_novel_statistics;
-use server::{create_db_pool, scrape};
-
-pub async fn sync_novel_statistics() -> anyhow::Result<()> {
-    let db = create_db_pool().await;
-
-    let rows: Vec<novel::Data> = db
-        .novel()
-        .find_many(vec![novel::in_list::equals(true)])
-        .exec()
-        .await?;
-    for row in rows {
-        let novel_id = row.novel_id;
-        match get_novel_statistics(novel_id).await {
-            Ok(novel) => {
-                let s = db
-                    .novel_statistics()
-                    .create(
-                        novel_id,
-                        vec![
-                            novel_statistics::first_chapter_clicks::set(novel.first_chapter_clicks),
-                            novel_statistics::last_chapter_clicks::set(novel.last_chapter_clicks),
-                            novel_statistics::reviews::set(novel.reviews),
-                            novel_statistics::collected::set(novel.collected),
-                            novel_statistics::rewards::set(novel.rewards),
-                        ],
-                    )
-                    .exec()
-                    .await?;
-                println!("{:?}", s);
-            }
-            Err(e) => println!("failed for novel_id: {}, {:?}", novel_id, e),
-        };
-    }
-
-    Ok(())
-}
 
 pub async fn sync_book_list() -> anyhow::Result<()> {
     let db = create_db_pool().await;
@@ -81,6 +46,41 @@ pub async fn sync_book_list() -> anyhow::Result<()> {
         )
         .exec()
         .await?;
+
+    Ok(())
+}
+
+pub async fn sync_novel_statistics() -> anyhow::Result<()> {
+    let db = create_db_pool().await;
+
+    let rows: Vec<novel::Data> = db
+        .novel()
+        .find_many(vec![novel::in_list::equals(true)])
+        .exec()
+        .await?;
+    for row in rows {
+        let novel_id = row.novel_id;
+        match get_novel_statistics(novel_id).await {
+            Ok(novel) => {
+                let s = db
+                    .novel_statistics()
+                    .create(
+                        novel_id,
+                        vec![
+                            novel_statistics::first_chapter_clicks::set(novel.first_chapter_clicks),
+                            novel_statistics::last_chapter_clicks::set(novel.last_chapter_clicks),
+                            novel_statistics::reviews::set(novel.reviews),
+                            novel_statistics::collected::set(novel.collected),
+                            novel_statistics::rewards::set(novel.rewards),
+                        ],
+                    )
+                    .exec()
+                    .await?;
+                println!("{:?}", s);
+            }
+            Err(e) => println!("failed for novel_id: {}, {:?}", novel_id, e),
+        };
+    }
 
     Ok(())
 }

@@ -2,7 +2,6 @@ pub mod errors;
 #[allow(warnings, unused)]
 pub mod prisma;
 pub mod route_fn;
-pub mod scrape;
 
 use axum::{
     http::StatusCode,

@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use anyhow::bail;
-use encoding::{all::GBK, Encoding, DecoderTrap};
-use scraper::{Html, Selector};
+use encoding_rs::*;
+use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Serialize, Deserialize, Debug)]
@@ -48,32 +48,13 @@ pub async fn get_novel_statistics(novel_id: i32) -> anyhow::Result<NovelStatisti
     let review_count_selector = Selector::parse(r#"[itemProp="reviewCount"]"#).unwrap();
     let collected_selector = Selector::parse(r#"[itemProp="collectedCount"]"#).unwrap();
     let rewards_selector = Selector::parse(r#"[itemProp="collectedCount"] + span"#).unwrap();
-    let reviews = doc
-        .select(&review_count_selector)
-        .next()
-        .unwrap()
-        .text()
-        .collect::<String>();
-    let collected = doc
-        .select(&collected_selector)
-        .next()
-        .unwrap()
-        .text()
-        .collect::<String>();
-    let rewards = doc
-        .select(&rewards_selector)
-        .next()
-        .unwrap()
-        .text()
-        .collect::<String>();
+
+    let reviews = get_element_content(doc.select(&review_count_selector).next());
+    let collected = get_element_content(doc.select(&collected_selector).next());
+    let rewards = get_element_content(doc.select(&rewards_selector).next());
 
     let title_selector = Selector::parse(r#"[itemProp="articleSection"]"#).unwrap();
-    let _title = doc
-        .select(&title_selector)
-        .next()
-        .unwrap()
-        .text()
-        .collect::<String>();
+    let _title = get_element_content(doc.select(&title_selector).next());
 
     Ok(NovelStatistic {
         novel_id,
@@ -107,9 +88,11 @@ pub async fn get_chapter_clicks(novel_id: i32) -> anyhow::Result<(i32, i32)> {
 }
 
 pub async fn get_html(url: &str) -> anyhow::Result<String> {
-    let buf = reqwest::get(url).await?.bytes().await?;
-    let utf8_str = GBK.decode(&buf, DecoderTrap::Ignore).unwrap();
-    Ok(utf8_str)
+    let gbk_bytes = reqwest::get(url).await?.bytes().await?;
+    let (cow, _, _) = GBK.decode(&gbk_bytes);
+    let decoded_string = String::from_utf8_lossy(cow.as_bytes());
+    let ret = decoded_string.to_string();
+    Ok(ret)
 }
 
 pub async fn make_editor_recommended_list(
@@ -158,4 +141,11 @@ pub async fn make_editor_recommended_list(
     }
 
     Ok(novels)
+}
+
+fn get_element_content(el: Option<ElementRef>) -> String {
+    match el {
+        Some(e) => e.text().collect::<String>(),
+        _ => "0".to_string(),
+    }
 }

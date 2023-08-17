@@ -1,4 +1,5 @@
 pub mod jobs;
+pub mod scrape;
 
 use clap::{Parser, Subcommand};
 
