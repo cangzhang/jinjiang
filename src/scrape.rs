@@ -29,7 +29,7 @@ pub fn to_i32(s: &str) -> i32 {
     s.parse::<i32>().unwrap()
 }
 
-pub async fn get_novel_statistics(novel_id: i32) -> surf::Result<NovelStatistic> {
+pub async fn get_novel_statistics(novel_id: i32) -> anyhow::Result<NovelStatistic> {
     let novel_url = format!("https://www.jjwxc.net/onebook.php?novelid={novel_id}");
     let (html_body, clicks_resp) = futures::join!(get_html(&novel_url), get_chapter_clicks(novel_id));
     let html = if let Ok(b) = html_body {
@@ -85,12 +85,12 @@ pub async fn get_novel_statistics(novel_id: i32) -> surf::Result<NovelStatistic>
     })
 }
 
-pub async fn get_chapter_clicks(novel_id: i32) -> surf::Result<(i32, i32)> {
+pub async fn get_chapter_clicks(novel_id: i32) -> anyhow::Result<(i32, i32)> {
     let clicks_url = format!("https://s8-static.jjwxc.net/getnovelclick.php?novelid={novel_id}&jsonpcallback=novelclick");
-    let body = surf::get(clicks_url).recv_string().await?;
+    let body = reqwest::get(clicks_url).await?.text().await?;
     let click_map_str = body.replace("novelclick(", "").replace(')', "");
     if click_map_str.eq("[]") {
-        return Err(surf::Error::from_str(429, "empty click map"));
+        bail!("clicks is empty")
     }
 
     let click_map = serde_json::from_str::<HashMap<String, String>>(&click_map_str).unwrap();
@@ -103,8 +103,8 @@ pub async fn get_chapter_clicks(novel_id: i32) -> surf::Result<(i32, i32)> {
     Ok((first, last))
 }
 
-pub async fn get_html(url: &str) -> surf::Result<String> {
-    let body = surf::get(url).await?.body_bytes().await?;
+pub async fn get_html(url: &str) -> anyhow::Result<String> {
+    let body = reqwest::get(url).await?.bytes().await?;
     let decoded_string = GBK.decode(&body, DecoderTrap::Strict).unwrap();
     Ok(decoded_string)
 }

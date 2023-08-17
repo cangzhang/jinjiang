@@ -92,7 +92,7 @@ mod tests {
     use crate::{create_db_pool, jobs::*};
 
     #[tokio::test]
-    async fn test_sync_book_list() -> surf::Result<()> {
+    async fn test_sync_book_list() -> anyhow::Result<()> {
         dotenv().ok();
 
         let db = create_db_pool().await;
@@ -101,7 +101,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_sync_novel_statistics() -> surf::Result<()> {
+    async fn test_sync_novel_statistics() -> anyhow::Result<()> {
         dotenv().ok();
         sync_novel_statistics().await?;
         Ok(())
