@@ -4,6 +4,8 @@ use anyhow::bail;
 use encoding_rs::*;
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
+use regex::Regex;
+use lazy_static::lazy_static;
 
 #[derive(Default, Serialize, Deserialize, Debug)]
 pub struct Novel {
@@ -26,11 +28,31 @@ pub struct NovelStatistic {
 }
 
 pub fn to_i32(s: &str) -> i32 {
-    s.parse::<i32>().unwrap()
+    match s.parse::<i32>() {
+        Ok(i) => i,
+        Err(_) => {
+            dbg!(s);
+            0
+        },
+    }
+}
+
+pub fn extract_num(text: &String) -> i32 {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"(?m)\d+").unwrap();
+    }
+
+    let m = RE.find_iter(text)
+        // try to parse the string matches as i64 (inferred from fn type signature)
+        // and filter out the matches that can't be parsed (e.g. if there are too many digits to store in an i64).
+        .filter_map(|digits| digits.as_str().parse::<i32>().ok())
+        // collect the results in to a Vec<i64> (inferred from fn type signature)
+        .collect::<Vec<i32>>();
+    m.get(0).unwrap_or(&0).clone()
 }
 
 pub async fn get_novel_statistics(novel_id: i32) -> anyhow::Result<NovelStatistic> {
-    let novel_url = format!("https://www.jjwxc.net/onebook.php?novelid={novel_id}");
+    let novel_url = format!("https://m.jjwxc.net/book2/{novel_id}");
     let (html_body, clicks_resp) =
         futures::join!(get_html(&novel_url), get_chapter_clicks(novel_id));
     let html = if let Ok(b) = html_body {
@@ -45,24 +67,21 @@ pub async fn get_novel_statistics(novel_id: i32) -> anyhow::Result<NovelStatisti
     };
 
     let doc = Html::parse_document(&html);
-    let review_count_selector = Selector::parse(r#"[itemProp="reviewCount"]"#).unwrap();
     let collected_selector = Selector::parse(r#"[itemProp="collectedCount"]"#).unwrap();
-    let rewards_selector = Selector::parse(r#"[itemProp="collectedCount"] + span"#).unwrap();
+    let review_count_selector = Selector::parse(r#"[href^="/review/"]"#).unwrap();
+    let rewards_selector = Selector::parse(r#"[href^="/nutrition/sendnutrition"]"#).unwrap();
 
     let reviews = get_element_content(doc.select(&review_count_selector).next());
     let collected = get_element_content(doc.select(&collected_selector).next());
     let rewards = get_element_content(doc.select(&rewards_selector).next());
 
-    let title_selector = Selector::parse(r#"[itemProp="articleSection"]"#).unwrap();
-    let _title = get_element_content(doc.select(&title_selector).next());
-
     Ok(NovelStatistic {
         novel_id,
-        reviews: to_i32(&reviews),
-        collected: to_i32(&collected),
         first_chapter_clicks: clicks.0,
         last_chapter_clicks: clicks.1,
-        rewards: to_i32(&rewards),
+        reviews: extract_num(&reviews),
+        collected: extract_num(&collected),
+        rewards: extract_num(&rewards),
         ..Default::default()
     })
 }
@@ -89,10 +108,15 @@ pub async fn get_chapter_clicks(novel_id: i32) -> anyhow::Result<(i32, i32)> {
 
 pub async fn get_html(url: &str) -> anyhow::Result<String> {
     let gbk_bytes = reqwest::get(url).await?.bytes().await?;
-    let (cow, _, _) = GBK.decode(&gbk_bytes);
-    let decoded_string = String::from_utf8_lossy(cow.as_bytes());
-    let ret = decoded_string.to_string();
-    Ok(ret)
+    let (cow, _, _) = GB18030.decode(&gbk_bytes);
+
+    // convert cow to vec<u8>
+    let mut vec = vec![];
+    vec.extend_from_slice(cow.as_bytes());
+    let utf8_bytes = vec;
+    
+    let decoded_string = String::from_utf8(utf8_bytes).unwrap();
+    Ok(decoded_string)
 }
 
 pub async fn make_editor_recommended_list(
