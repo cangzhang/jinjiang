@@ -1,0 +1,2 @@
+0 */6 * * * root DATABASE_URL="file:/app/sqlite.db" /usr/local/bin/jinjiang-cli sync-novels
+*/5 * * * * root DATABASE_URL="file:/app/sqlite.db" /usr/local/bin/jinjiang-cli sync-statistics

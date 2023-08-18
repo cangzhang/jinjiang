@@ -2,8 +2,18 @@ version: '3'
 services:
 
   app:
-    image: cangzhang/jinjiang:latest
+    image: cangzhang/jinjiang:local
+    network_mode: host
     ports:
       - 3300:3300
     volumes:
       - ./sqlite.db:/app/sqlite.db
+    command: ["sh", "-c", "DATABASE_URL=${DATABASE_URL} jinjiang"]
+
+  cron:
+    image: cangzhang/jinjiang:local
+    network_mode: host
+    volumes:
+      - ./docker/crontab:/etc/crontabs
+      - ./sqlite.db:/app/sqlite.db
+    command: ["cron","-f", "-l", "2"]
