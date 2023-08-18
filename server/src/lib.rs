@@ -16,6 +16,10 @@ use prisma_client_rust::{
     QueryError,
 };
 use std::{net::SocketAddr, sync::Arc};
+use tower::ServiceBuilder;
+use tower_http::trace::TraceLayer;
+use tracing::log::info;
+use tower_http::cors::{Any, CorsLayer};
 
 pub async fn start() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
@@ -24,6 +28,7 @@ pub async fn start() -> anyhow::Result<()> {
     let db = create_db_pool().await;
     let db_guard = Arc::new(db);
 
+    let cors = CorsLayer::new().allow_origin(Any);
     let app = Router::new()
         .nest(
             "/api",
@@ -34,10 +39,12 @@ pub async fn start() -> anyhow::Result<()> {
                     .route("/detail", get(route_fn::novel_detail)),
             ),
         )
-        .layer(Extension(db_guard));
+        .layer(cors)
+        .layer(Extension(db_guard))
+        .layer(ServiceBuilder::new().layer(TraceLayer::new_for_http()));
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3300));
-    tracing::info!("listening on {}", addr);
+    info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await?;
