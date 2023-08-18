@@ -25,5 +25,5 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           push: true
-          tags: cangzhang/gh-server:latest
+          tags: cangzhang/jingjiang:latest
           # platforms: linux/amd64,linux/arm64
