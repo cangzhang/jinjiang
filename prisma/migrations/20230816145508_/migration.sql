@@ -5,6 +5,7 @@ CREATE TABLE "Novel" (
     "novelId" INTEGER NOT NULL,
     "authorId" INTEGER NOT NULL,
     "listName" TEXT NOT NULL,
+    "inList" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME
 );
