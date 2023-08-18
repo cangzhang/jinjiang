@@ -8,6 +8,12 @@
 cargo prisma generate
 ```
 
+### setup env file
+
+```console
+cp .env.exampple .env
+```
+
 ### create database
 
 ```console

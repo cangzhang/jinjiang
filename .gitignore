@@ -7,3 +7,5 @@ src/prisma.rs
 server/src/prisma.rs
 .env
 .idea/
+
+.DS_Store
