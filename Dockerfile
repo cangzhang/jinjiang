@@ -9,4 +9,7 @@ COPY --from=builder /usr/src/app/target/release/jinjiang /usr/local/bin/jinjiang
 COPY --from=builder /usr/src/app/target/release/jinjiang-cli /usr/local/bin/jinjiang-cli
 COPY --from=builder /usr/src/app/target/release/prisma-cli /usr/local/bin/prisma-cli
 
-CMD ["jinjiang"]
+ARG DATABASE_URL 
+ENV DATABASE_URL "file:/app/sqlite.db"
+
+CMD ["sh", "-c", "DATABASE_URL=${DATABASE_URL} jinjiang"]
