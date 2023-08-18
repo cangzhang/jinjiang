@@ -1,4 +1,4 @@
-# jingjiang
+# jinjiang
 
 ## Setup
 

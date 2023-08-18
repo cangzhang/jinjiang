@@ -1,0 +1,11 @@
+version: '3'
+services:
+
+  app:
+    image: cangzhang/jinjiang:latest
+    ports:
+      - 3300:3300
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    volumes:
+      - ./sqlite.db:/app/sqlite.db
