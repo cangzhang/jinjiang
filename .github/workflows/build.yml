@@ -16,7 +16,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.ref == 'refs/head/master' }}
+          cache-all-crates: "true"
 
       - name: Build project
         run: |

@@ -9,3 +9,5 @@ server/src/prisma.rs
 .idea/
 
 .DS_Store
+
+docker-compose.yml
