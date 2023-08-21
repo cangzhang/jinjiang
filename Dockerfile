@@ -3,7 +3,7 @@ WORKDIR /usr/src/app
 COPY . .
 RUN cargo prisma generate \
     && cargo install --path . \
-    && cargo build --release --all
+    && cargo build --release -p jinjiang-cli
 
 FROM debian:bullseye-slim
 ARG DATABASE_URL 
