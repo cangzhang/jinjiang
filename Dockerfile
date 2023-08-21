@@ -1,7 +1,7 @@
 FROM debian:bullseye-slim
 ARG DATABASE_URL 
 ENV DATABASE_URL "file:/app/sqlite.db"
-RUN apt-get update && apt-get install -y curl cron sqlite3 && rm -rf /var/lib/apt/lists/* /etc/cron.*/*
+RUN apt-get update && apt-get install -y curl cron sqlite3 && rm -rf /var/lib/apt/lists/* /etc/cron.*/* && which cron
 COPY target/release/jinjiang /usr/local/bin/jinjiang
 COPY target/release/jinjiang-cli /usr/local/bin/jinjiang-cli
 

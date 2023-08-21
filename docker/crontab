@@ -1,2 +1,2 @@
 0 */6 * * * DATABASE_URL="file:/app/sqlite.db" /usr/local/bin/jinjiang-cli sync-novels > /proc/1/fd/1 2>/proc/1/fd/2
-* */4 * * * DATABASE_URL="file:/app/sqlite.db" /usr/local/bin/jinjiang-cli sync-statistics > /proc/1/fd/1 2>/proc/1/fd/2
+*/3 * * * * DATABASE_URL="file:/app/sqlite.db" /usr/local/bin/jinjiang-cli sync-statistics > /proc/1/fd/1 2>/proc/1/fd/2
