@@ -27,7 +27,8 @@ jobs:
       - name: Build project
         run: |
           cargo run -p prisma-cli -- generate
-          cargo build --release -p jinjiang-cli -p jinjiang
+          cargo build --release -p jinjiang-cli 
+          cargo build --release -p jinjiang
       
       - name: Login to Docker Hub
         uses: docker/login-action@v2

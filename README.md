@@ -30,3 +30,8 @@ sqlite3 sqlite.db
 cargo prisma migrate deploy
 ```
 
+### permission
+
+```console
+chmod 777 *.db
+```
