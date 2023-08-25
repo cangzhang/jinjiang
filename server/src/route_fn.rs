@@ -29,3 +29,8 @@ pub async fn novel_detail(
         .await?;
     Ok(Json::from(item))
 }
+
+pub async fn novel_list(Extension(db): Database) -> AppJsonResult<Vec<novel::Data>> {
+    let items: Vec<novel::Data> = db.novel().find_many(vec![]).exec().await?;
+    Ok(Json::from(items))
+}

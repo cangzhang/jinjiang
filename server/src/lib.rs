@@ -17,9 +17,9 @@ use prisma_client_rust::{
 };
 use std::{net::SocketAddr, sync::Arc};
 use tower::ServiceBuilder;
+use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::log::info;
-use tower_http::cors::{Any, CorsLayer};
 
 pub async fn start() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
@@ -32,12 +32,17 @@ pub async fn start() -> anyhow::Result<()> {
     let app = Router::new()
         .nest(
             "/api",
-            Router::new().nest(
-                "/novel/:novel_id",
-                Router::new()
-                    .route("/statistics", get(route_fn::novel_statistics))
-                    .route("/detail", get(route_fn::novel_detail)),
-            ),
+            Router::new()
+                .nest(
+                    "/novel/:novel_id",
+                    Router::new()
+                        .route("/statistics", get(route_fn::novel_statistics))
+                        .route("/detail", get(route_fn::novel_detail)),
+                )
+                .nest(
+                    "/novels",
+                    Router::new().route("/", get(route_fn::novel_list)),
+                ),
         )
         .layer(cors)
         .layer(Extension(db_guard))
