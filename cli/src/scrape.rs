@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::bail;
-use encoding_rs::*;
+use encoding_rs::GB18030;
 use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
 use regex::Regex;
@@ -107,16 +107,9 @@ pub async fn get_chapter_clicks(novel_id: i32) -> anyhow::Result<(i32, i32)> {
 }
 
 pub async fn get_html(url: &str) -> anyhow::Result<String> {
-    let gbk_bytes = reqwest::get(url).await?.bytes().await?;
-    let (cow, _, _) = GB18030.decode(&gbk_bytes);
-
-    // convert cow to vec<u8>
-    let mut vec = vec![];
-    vec.extend_from_slice(cow.as_bytes());
-    let utf8_bytes = vec;
-    
-    let decoded_string = String::from_utf8(utf8_bytes).unwrap();
-    Ok(decoded_string)
+    let bytes = reqwest::get(url).await?.bytes().await?;
+    let (cow, _, _) = GB18030.decode(&bytes);
+    Ok(cow.into_owned())
 }
 
 pub async fn make_editor_recommended_list(
@@ -129,6 +122,7 @@ pub async fn make_editor_recommended_list(
             bail!("fetch {list_url} failed")
         }
     };
+
     let doc = Html::parse_document(&html);
     let tr_selector =
         Selector::parse(r#"tr[onmouseover]:nth-child(n+2):nth-child(-n+21)"#).unwrap();
