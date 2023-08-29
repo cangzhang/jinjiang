@@ -1873,6 +1873,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "clap",
+ "cuid",
  "encoding_rs",
  "futures",
  "lazy_static",
